@@ -1,5 +1,7 @@
 import time
-import pickle
+# import pickle
+import dill as pickle
+
 import numpy as np
 import itertools
 from scipy.spatial.distance import pdist, squareform
