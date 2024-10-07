@@ -116,11 +116,11 @@ class TSPDatasetDGL(Dataset):
         
 
 class TSPDataset(Dataset):
-    def __init__(self, name):
+    def __init__(self, name, folder_prefix=''):
         start = time.time()
         print("[I] Loading dataset %s..." % (name))
         self.name = name
-        data_dir = 'data/TSP/'
+        data_dir = folder_prefix + 'data/TSP/'
         with open(data_dir+name+'.pkl',"rb") as f:
             f = pickle.load(f)
             self.train = f[0]

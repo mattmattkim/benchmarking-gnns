@@ -13,7 +13,7 @@ from data.graphtheoryprop import GraphTheoryPropDataset
 from data.WikiCS import WikiCSDataset
 
 
-def LoadData(DATASET_NAME):
+def LoadData(DATASET_NAME, folder_prefix=''):
     """
         This function is called in the main.py file 
         returns:
@@ -39,7 +39,7 @@ def LoadData(DATASET_NAME):
     
     # handling for TSP dataset
     if DATASET_NAME == 'TSP':
-        return TSPDataset(DATASET_NAME)
+        return TSPDataset(DATASET_NAME, folder_prefix)
 
     # handling for COLLAB dataset
     if DATASET_NAME == 'OGBL-COLLAB':
@@ -59,4 +59,3 @@ def LoadData(DATASET_NAME):
     
     if DATASET_NAME == 'WikiCS':
         return WikiCSDataset(DATASET_NAME)
-    
