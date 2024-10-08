@@ -22,7 +22,7 @@ class TSP(Dataset):
         self.n_samples = 0  # Initialize sample count
         
         # Detect DGL version
-        self.dgl_version = dgl.__version__
+        self.dgl_version = getattr(dgl, '__version__', '0.4.0')
         print(f"DGL version detected: {self.dgl_version}")
         
         self._prepare()
@@ -138,13 +138,17 @@ class TSP(Dataset):
             DGLGraph with node features in 'feat' field and edge labels.
         """
         g = self.graph_lists[idx]
+
+        # Initialize dgl_version if it does not exist
+        if not hasattr(self, 'dgl_version'):
+            self.dgl_version = getattr(dgl, '__version__', '0.4.0')
+
         # For newer versions, extract labels from edata if needed
         if version.parse(self.dgl_version) >= version.parse("0.5.0"):
             edge_labels = g.edata['label'].tolist()
         else:
             edge_labels = self.edge_labels[idx]
         return g, edge_labels
-
 
 class TSPDatasetDGL(Dataset):
     def __init__(self, name):
