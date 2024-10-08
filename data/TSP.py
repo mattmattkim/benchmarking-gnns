@@ -1,15 +1,12 @@
 import time
-# import pickle
 import dill as pickle
-
 import numpy as np
 import itertools
 from scipy.spatial.distance import pdist, squareform
-
-import dgl
 import torch
 from torch.utils.data import Dataset
-
+import dgl
+from packaging import version
 
 class TSP(Dataset):
     def __init__(self, data_dir, split="train", num_neighbors=25, max_samples=10000):    
@@ -22,17 +19,26 @@ class TSP(Dataset):
         
         self.graph_lists = []
         self.edge_labels = []
+        self.n_samples = 0  # Initialize sample count
+        
+        # Detect DGL version
+        self.dgl_version = dgl.__version__
+        print(f"DGL version detected: {self.dgl_version}")
+        
         self._prepare()
         self.n_samples = len(self.edge_labels)
-    
+        
+        # Save the graphs after preparation
+        self._save_graphs()
+
     def _prepare(self):
-        print('preparing all graphs for the %s set...' % self.split.upper())
+        print(f'Preparing all graphs for the {self.split.upper()} set...')
         
         file_data = open(self.filename, "r").readlines()[:self.max_samples]
         
         for graph_idx, line in enumerate(file_data):
-            line = line.split(" ")  # Split into list
-            num_nodes = int(line.index('output')//2)
+            line = line.strip().split(" ")  # Split into list and remove any extra whitespace
+            num_nodes = int(line.index('output') // 2)
             
             # Convert node coordinates to required format
             nodes_coord = []
@@ -42,11 +48,12 @@ class TSP(Dataset):
             # Compute distance matrix
             W_val = squareform(pdist(nodes_coord, metric='euclidean'))
             # Determine k-nearest neighbors for each node
-            knns = np.argpartition(W_val, kth=self.num_neighbors, axis=-1)[:, self.num_neighbors::-1]
+            knns = np.argpartition(W_val, kth=self.num_neighbors, axis=-1)[:, :self.num_neighbors+1]
 
             # Convert tour nodes to required format
             # Don't add final connection for tour/cycle
-            tour_nodes = [int(node) - 1 for node in line[line.index('output') + 1:-1]][:-1]
+            output_idx = line.index('output')
+            tour_nodes = [int(node) - 1 for node in line[output_idx + 1:]][:-1]
 
             # Compute an edge adjacency matrix representation of tour
             edges_target = np.zeros((num_nodes, num_nodes))
@@ -56,38 +63,67 @@ class TSP(Dataset):
                 edges_target[i][j] = 1
                 edges_target[j][i] = 1
             # Add final connection of tour in edge target
-            edges_target[j][tour_nodes[0]] = 1
-            edges_target[tour_nodes[0]][j] = 1
+            edges_target[tour_nodes[-1]][tour_nodes[0]] = 1
+            edges_target[tour_nodes[0]][tour_nodes[-1]] = 1
             
             # Construct the DGL graph
-            g = dgl.DGLGraph()
-            g.add_nodes(num_nodes)
-            g.ndata['feat'] = torch.Tensor(nodes_coord)
+            if version.parse(self.dgl_version) < version.parse("0.5.0"):
+                # For older versions of DGL
+                g = dgl.DGLGraph()
+                g.add_nodes(num_nodes)
+            else:
+                # For newer versions of DGL
+                g = dgl.graph(([], []), num_nodes=num_nodes)
             
-            edge_feats = []  # edge features i.e. euclidean distances between nodes
-            edge_labels = []  # edges_targets as a list
-            # Important!: order of edge_labels must be the same as the order of edges in DGLGraph g
-            # We ensure this by adding them together
+            g.ndata['feat'] = torch.tensor(nodes_coord, dtype=torch.float32)
+            
+            edge_feats = []  # Edge features (Euclidean distances)
+            edge_labels = []  # Edge labels (1 if part of the tour, 0 otherwise)
+            src_nodes = []
+            dst_nodes = []
             for idx in range(num_nodes):
                 for n_idx in knns[idx]:
-                    if n_idx != idx:  # No self-connection
-                        g.add_edge(idx, n_idx)
+                    if n_idx != idx:  # No self-connections
+                        src_nodes.append(idx)
+                        dst_nodes.append(n_idx)
                         edge_feats.append(W_val[idx][n_idx])
                         edge_labels.append(int(edges_target[idx][n_idx]))
-            # dgl.transform.remove_self_loop(g)
             
-            # Sanity check
-            assert len(edge_feats) == g.number_of_edges() == len(edge_labels)
+            # Add edges to the graph
+            if version.parse(self.dgl_version) < version.parse("0.5.0"):
+                # For older versions of DGL
+                g.add_edges(src_nodes, dst_nodes)
+            else:
+                # For newer versions of DGL
+                g.add_edges(src_nodes, dst_nodes)
             
             # Add edge features
-            g.edata['feat'] = torch.Tensor(edge_feats).unsqueeze(-1)
-            
-            # # Uncomment to add dummy edge features instead (for Residual Gated ConvNet)
-            # edge_feat_dim = g.ndata['feat'].shape[1] # dim same as node feature dim
-            # g.edata['feat'] = torch.ones(g.number_of_edges(), edge_feat_dim)
+            g.edata['feat'] = torch.tensor(edge_feats, dtype=torch.float32).unsqueeze(-1)
+            g.edata['label'] = torch.tensor(edge_labels, dtype=torch.int64)
             
             self.graph_lists.append(g)
             self.edge_labels.append(edge_labels)
+
+    def _save_graphs(self):
+        # Save the graphs
+        graph_path = f'{self.data_dir}/{self.split}_graphs.bin'
+        label_path = f'{self.data_dir}/{self.split}_labels.pkl'
+        
+        # For newer versions, labels can be saved within the graphs
+        if version.parse(self.dgl_version) >= version.parse("0.5.0"):
+            dgl.save_graphs(graph_path, self.graph_lists)
+            print(f"Graphs saved to {graph_path}")
+            # If needed, save labels separately
+            with open(label_path, 'wb') as f:
+                pickle.dump(self.edge_labels, f)
+                print(f"Labels saved to {label_path}")
+        else:
+            # For older versions, save graphs and labels separately
+            dgl.data.utils.save_graphs(graph_path, self.graph_lists)
+            print(f"Graphs saved to {graph_path}")
+            with open(label_path, 'wb') as f:
+                pickle.dump(self.edge_labels, f)
+                print(f"Labels saved to {label_path}")
 
     def __len__(self):
         """Return the number of graphs in the dataset."""
@@ -95,18 +131,19 @@ class TSP(Dataset):
 
     def __getitem__(self, idx):
         """
-            Get the idx^th sample.
-            Parameters
-            ---------
-            idx : int
-                The sample index.
-            Returns
-            -------
-            (dgl.DGLGraph, list)
-                DGLGraph with node feature stored in `feat` field
-                And a list of labels for each edge in the DGLGraph.
+        Get the idx^th sample.
+        Returns
+        -------
+        (dgl.DGLGraph, list)
+            DGLGraph with node features in 'feat' field and edge labels.
         """
-        return self.graph_lists[idx], self.edge_labels[idx]
+        g = self.graph_lists[idx]
+        # For newer versions, extract labels from edata if needed
+        if version.parse(self.dgl_version) >= version.parse("0.5.0"):
+            edge_labels = g.edata['label'].tolist()
+        else:
+            edge_labels = self.edge_labels[idx]
+        return g, edge_labels
 
 
 class TSPDatasetDGL(Dataset):
