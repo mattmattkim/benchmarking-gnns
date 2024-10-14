@@ -26,3 +26,25 @@ python ./data/TSP/generate_TSP.py --min_nodes 50 --max_nodes 500 --num_samples 1
 
 # Main
 python main_TSP_edge_classification.py --config ./configs/TSP_edge_classification_GatedGCN_100k.json --gpu_id 3
+
+# Install Nvidia driviers
+
+sudo apt-get update
+sudo apt-get install software-properties-common
+
+echo "deb http://security.debian.org/debian-security bullseye-security main" | sudo tee -a /etc/apt/sources.list
+sudo apt update
+sudo apt install libssl1.1
+
+sudo apt install libcuda1=560.35.03-1 libnvidia-fbc1=560.35.03-1 libnvidia-opticalflow1=560.35.03-1 libnvcuvid1=560.35.03-1
+sudo tee -a /etc/apt/sources.list << EOF
+deb http://deb.debian.org/debian bullseye main contrib non-free
+deb http://deb.debian.org/debian-security/ bullseye-security main contrib non-free
+deb http://deb.debian.org/debian bullseye-updates main contrib non-free
+EOF
+
+sudo apt update
+
+sudo apt install linux-headers-amd64 nvidia-driver
+
+sudo apt install libcuda1=560.35.03-1 libnvidia-fbc1=560.35.03-1 libnvidia-opticalflow1=560.35.03-1 libnvcuvid1=560.35.03-1
