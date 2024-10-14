@@ -144,10 +144,10 @@ class TSP(Dataset):
             self.dgl_version = getattr(dgl, '__version__', '0.5.0')
             
         # For newer versions, extract labels from edata if needed
-        if version.parse(self.dgl_version) >= version.parse("0.5.0"):
-            edge_labels = g.edata['label'].tolist()
-        else:
-            edge_labels = self.edge_labels[idx]
+        # if version.parse(self.dgl_version) >= version.parse("0.5.0"):
+        #     edge_labels = g.edata['label'].tolist()
+        # else:
+        edge_labels = self.edge_labels[idx]
         return g, edge_labels
 
 
