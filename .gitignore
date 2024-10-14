@@ -31,6 +31,9 @@ data/TSP/*.zip
 data/TSP/pyconcorde/
 data/TSP/*.bin
 
+#molecules
+data/molecules/asqol_graph_raw/*.pickle
+
 #COLLAB
 data/COLLAB/*
 dataset/
@@ -49,7 +52,8 @@ data/graphtheoryprop/*.pkl
 #WikiCS
 data/WikiCS/*.json
 
-
+#Visualization
+visualization/*.ipynb
 
 scripts/StatisticalResults/cycles.ipynb
 scripts/StatisticalResults/wikics.ipynb
