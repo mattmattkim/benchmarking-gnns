@@ -15,7 +15,7 @@ import time
 import random
 import glob
 import argparse, json
-import pickle
+import dill as pickle
 
 import torch
 import torch.nn as nn
@@ -46,20 +46,49 @@ from data.data import LoadData # import dataset
 
 
 
-
 """
     GPU Setup
 """
 def gpu_setup(use_gpu, gpu_id):
+    print("Entering gpu_setup function")
+    print(f"use_gpu: {use_gpu}, gpu_id: {gpu_id}")
+
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)  
+    print(f"CUDA_VISIBLE_DEVICES set to: {os.environ['CUDA_VISIBLE_DEVICES']}")
+
+    print("PyTorch CUDA availability:", torch.cuda.is_available())
+    if torch.cuda.is_available():
+        print("CUDA device count:", torch.cuda.device_count())
+        print("CUDA current device:", torch.cuda.current_device())
+    else:
+        print("CUDA is not available. Checking why...")
+        if not torch.cuda.is_available():
+            print("torch.cuda.is_available() returned False")
+        if not use_gpu:
+            print("use_gpu is set to False")
+        try:
+            print("Attempting to get CUDA device properties...")
+            torch.cuda.get_device_properties(0)
+        except Exception as e:
+            print(f"Error getting CUDA device properties: {str(e)}")
 
     if torch.cuda.is_available() and use_gpu:
-        print('cuda available with GPU:',torch.cuda.get_device_name(0))
+        print('CUDA is available')
+        print('CUDA version:', torch.version.cuda)
+        print('Number of CUDA devices:', torch.cuda.device_count())
+        print('Current CUDA device:', torch.cuda.current_device())
+        print('CUDA device name:', torch.cuda.get_device_name(0))
         device = torch.device("cuda")
     else:
-        print('cuda not available')
+        if not torch.cuda.is_available():
+            print('CUDA is not available')
+        elif not use_gpu:
+            print('use_gpu is set to False')
         device = torch.device("cpu")
+        print('Using CPU')
+
+    print(f"Returning device: {device}")
     return device
 
 
@@ -101,7 +130,8 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
     
     # Write the network and optimization hyper-parameters in folder config/
     with open(write_config_file + '.txt', 'w') as f:
-        f.write("""Dataset: {},\nModel: {}\n\nparams={}\n\nnet_params={}\n\n\nTotal Parameters: {}\n\n"""                .format(DATASET_NAME, MODEL_NAME, params, net_params, net_params['total_param']))
+        f.write("""Dataset: {},\nModel: {}\n\nparams={}\n\nnet_params={}\n\n\nTotal Parameters: {}\n\n"""\
+                .format(DATASET_NAME, MODEL_NAME, params, net_params, net_params['total_param']))
         
     log_dir = os.path.join(root_log_dir, "RUN_" + str(0))
     writer = SummaryWriter(log_dir=log_dir)

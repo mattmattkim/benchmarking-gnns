@@ -6,6 +6,16 @@ out/
 
 gmail.py
 
+# Ignore all .bin files in the data directory and its subdirectories
+data/**/*.bin
+
+# Ignore large data files
+*.npy
+*.npz
+*.pkl
+*.h5
+*.hdf5
+
 #SBM datasets
 data/SBMs/*.pkl
 
@@ -29,6 +39,10 @@ data/TSP/*.txt
 data/TSP/*.pkl
 data/TSP/*.zip
 data/TSP/pyconcorde/
+data/TSP/*.bin
+
+#molecules
+data/molecules/asqol_graph_raw/*.pickle
 
 #COLLAB
 data/COLLAB/*
@@ -48,7 +62,8 @@ data/graphtheoryprop/*.pkl
 #WikiCS
 data/WikiCS/*.json
 
-
+#Visualization
+visualization/*.ipynb
 
 scripts/StatisticalResults/cycles.ipynb
 scripts/StatisticalResults/wikics.ipynb
