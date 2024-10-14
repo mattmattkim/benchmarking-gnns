@@ -1,14 +1,16 @@
 name: benchmark_gnn
 channels:
 - pytorch 
-- dglteam
+- dglteam/label/th24_cu124
 - conda-forge
 - fragcolor
 - anaconda
 - defaults
 dependencies:
+- git
+- pip
 - python=3.9
-- torch=2.4.0
+- pytorch=2.4.0
 - pydantic>=2.0
 - torchvision
 - torchaudio
@@ -26,5 +28,7 @@ dependencies:
 - pandas
 - dill
 - ogb
+- dgl
 - pip:
   - tensorflow
+  - dill
