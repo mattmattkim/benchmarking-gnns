@@ -28,7 +28,8 @@ python ./data/TSP/generate_TSP.py --min_nodes 50 --max_nodes 500 --num_samples 1
 python main_TSP_edge_classification.py --config ./configs/TSP_edge_classification_GatedGCN_100k.json --gpu_id 3
 
 # Install Nvidia driviers
-
+<!-- 
+This didn't work
 sudo apt-get update
 sudo apt-get install software-properties-common
 
@@ -48,3 +49,18 @@ sudo apt update
 sudo apt install linux-headers-amd64 nvidia-driver
 
 sudo apt install libcuda1=560.35.03-1 libnvidia-fbc1=560.35.03-1 libnvidia-opticalflow1=560.35.03-1 libnvcuvid1=560.35.03-1
+
+ -->
+
+### But this worked
+curl -L https://github.com/GoogleCloudPlatform/compute-gpu-installation/releases/download/cuda-installer-v1.1.0/cuda_installer.pyz --output cuda_installer.pyz
+sudo python3 cuda_installer.pyz install_driver
+
+### Then run
+
+python -c "import torch; print(torch.__version__); print(torch.version.cuda)"
+CUDA_VISIBLE_DEVICES=0 python main_TSP_edge_classification.py --config configs/TSP_edge_classification_GatedGCN_100k.json --gpu_id 0
+
+
+# Check Nvidia use
+sudo nvidia-smi
