@@ -6,6 +6,16 @@ out/
 
 gmail.py
 
+# Ignore all .bin files in the data directory and its subdirectories
+data/**/*.bin
+
+# Ignore large data files
+*.npy
+*.npz
+*.pkl
+*.h5
+*.hdf5
+
 #SBM datasets
 data/SBMs/*.pkl
 
