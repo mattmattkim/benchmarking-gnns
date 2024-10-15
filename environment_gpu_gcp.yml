@@ -1,0 +1,30 @@
+name: benchmark_gnn
+channels:
+- pytorch 
+- dglteam
+- conda-forge
+- fragcolor
+- anaconda
+- defaults
+dependencies:
+- python=3.9
+- torch=2.4.0
+- pydantic>=2.0
+- torchvision
+- torchaudio
+- numpy
+- matplotlib
+- tensorboard
+- tensorboardx
+- scikit-learn
+- scipy
+- notebook
+- ipykernel
+- ipython
+- jupyter
+- plotly
+- pandas
+- dill
+- ogb
+- pip:
+  - tensorflow
