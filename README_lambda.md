@@ -21,7 +21,7 @@ git clone https://github.com/mattmattkim/benchmarking-gnns.git
 cd benchmarking-gnns
 
 # Install python environment
-conda env create -f environment_gpu.yml   
+conda env create -f environment_gpu_lamba.yml   
 # Activate environment
 conda activate benchmark_gnn
 
